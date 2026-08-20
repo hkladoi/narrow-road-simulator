@@ -1,0 +1,13 @@
+{
+  "brief": "Narrow Road Vehicle Simulator · technical top-down workbench",
+  "audience": "Người lái xe thường ngày và người dùng thiên về kỹ thuật",
+  "primaryJob": "Mô hình hóa đường hẹp và tìm quỹ đạo an toàn, có thể giải thích",
+  "tone": "technical",
+  "genre": "modern-minimal",
+  "macrostructure": "Workbench",
+  "theme": "Cobalt",
+  "enrichment": "none",
+  "framework": "Next.js 16 + React 19 + Konva",
+  "signals": [],
+  "existingHallmarkStamp": false
+}

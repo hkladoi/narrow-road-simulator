@@ -1,0 +1,191 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum VehicleCategory {
+  HATCHBACK
+  SEDAN
+  SUV
+  MPV
+  PICKUP
+  CUSTOM
+}
+
+enum VehicleDataStatus {
+  READY
+  PARTIAL
+  RESOLVING
+  REVIEW_REQUIRED
+}
+
+enum EvidenceSourceType {
+  DIRECT
+  DERIVED
+  ESTIMATED
+}
+
+enum ResolveJobStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum PlanningRunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+model VehicleProfile {
+  id                   String              @id @default(uuid()) @db.Uuid
+  canonicalKey         String              @unique @map("canonical_key")
+  manufacturer         String
+  model                String
+  generation           String?
+  trim                 String?
+  modelYear            Int?                @map("model_year")
+  market               String?
+  displayName          String              @map("display_name")
+  searchTextNormalized String              @map("search_text_normalized")
+  category             VehicleCategory
+  status               VehicleDataStatus
+  lengthM              Float?              @map("length_m")
+  widthM               Float?              @map("width_m")
+  wheelbaseM           Float?              @map("wheelbase_m")
+  frontOverhangM       Float?              @map("front_overhang_m")
+  rearOverhangM        Float?              @map("rear_overhang_m")
+  maxSteerRad          Float?              @map("max_steer_rad")
+  minTurnRadiusM       Float?              @map("min_turn_radius_m")
+  trackWidthM          Float?              @map("track_width_m")
+  confidenceScore      Float?              @map("confidence_score")
+  dataVersion          Int                 @default(1) @map("data_version")
+  lastVerifiedAt       DateTime?           @map("last_verified_at")
+  isBuiltin            Boolean             @default(false) @map("is_builtin")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  aliases              VehicleAlias[]
+  sources              VehicleSpecSource[]
+  templates            ScenarioTemplate[]
+
+  @@index([manufacturer, model])
+  @@index([status])
+  @@map("vehicle_profiles")
+}
+
+model VehicleAlias {
+  id               String         @id @default(uuid()) @db.Uuid
+  vehicleProfileId String         @map("vehicle_profile_id") @db.Uuid
+  alias            String
+  aliasNormalized  String         @map("alias_normalized")
+  aliasType        String?        @map("alias_type")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  vehicleProfile   VehicleProfile @relation(fields: [vehicleProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([vehicleProfileId, aliasNormalized])
+  @@index([aliasNormalized])
+  @@map("vehicle_aliases")
+}
+
+model VehicleSpecSource {
+  id               String             @id @default(uuid()) @db.Uuid
+  vehicleProfileId String             @map("vehicle_profile_id") @db.Uuid
+  fieldName        String             @map("field_name")
+  valueRaw         String             @map("value_raw")
+  valueNormalized  Float?             @map("value_normalized")
+  unitRaw          String?            @map("unit_raw")
+  sourceUrl        String             @map("source_url")
+  sourceTitle      String             @map("source_title")
+  sourceDomain     String?            @map("source_domain")
+  sourceType       EvidenceSourceType @map("source_type")
+  confidence       Float
+  formula          String?
+  formulaInputs    Json?              @map("formula_inputs")
+  retrievedAt      DateTime           @map("retrieved_at")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  vehicleProfile   VehicleProfile     @relation(fields: [vehicleProfileId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleProfileId, fieldName])
+  @@map("vehicle_spec_sources")
+}
+
+model VehicleSearchCache {
+  id              String   @id @default(uuid()) @db.Uuid
+  queryNormalized String   @unique @map("query_normalized")
+  resultJson      Json     @map("result_json")
+  expiresAt       DateTime @map("expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([expiresAt])
+  @@map("vehicle_search_cache")
+}
+
+model VehicleResolveJob {
+  id           String           @id @default(uuid()) @db.Uuid
+  canonicalKey String           @unique @map("canonical_key")
+  status       ResolveJobStatus
+  errorCode    String?          @map("error_code")
+  startedAt    DateTime?        @map("started_at")
+  completedAt  DateTime?        @map("completed_at")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("vehicle_resolve_jobs")
+}
+
+model ScenarioTemplate {
+  id                      String          @id @default(uuid()) @db.Uuid
+  slug                    String          @unique
+  name                    String
+  description             String
+  sceneJson               Json            @map("scene_json")
+  defaultVehicleProfileId String?         @map("default_vehicle_profile_id") @db.Uuid
+  isBuiltin               Boolean         @default(true) @map("is_builtin")
+  createdAt               DateTime        @default(now()) @map("created_at")
+  updatedAt               DateTime        @updatedAt @map("updated_at")
+  defaultVehicleProfile   VehicleProfile? @relation(fields: [defaultVehicleProfileId], references: [id], onDelete: SetNull)
+
+  @@map("scenario_templates")
+}
+
+model Scenario {
+  id                 String        @id @default(uuid()) @db.Uuid
+  name               String
+  sceneJson          Json          @map("scene_json")
+  vehicleProfileJson Json?         @map("vehicle_profile_json")
+  startPoseJson      Json?         @map("start_pose_json")
+  goalJson           Json?         @map("goal_json")
+  safetyMarginM      Float         @default(0) @map("safety_margin_m")
+  version            Int           @default(1)
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  planningRuns       PlanningRun[]
+
+  @@index([updatedAt])
+  @@map("scenarios")
+}
+
+model PlanningRun {
+  id             String            @id @default(uuid()) @db.Uuid
+  scenarioId     String            @map("scenario_id") @db.Uuid
+  plannerVersion String            @map("planner_version")
+  settingsJson   Json              @map("settings_json")
+  status         PlanningRunStatus
+  resultJson     Json?             @map("result_json")
+  runtimeMs      Int?              @map("runtime_ms")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  scenario       Scenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@index([scenarioId, createdAt])
+  @@map("planning_runs")
+}

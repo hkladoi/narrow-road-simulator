@@ -1,0 +1,6 @@
+.next
+coverage
+dist
+node_modules
+.codex-spec-render
+pnpm-lock.yaml

@@ -1,0 +1,40 @@
+{
+  "name": "@nrs/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "eslint app components lib tests next.config.ts playwright.config.ts vitest.config.ts",
+    "start": "next start",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nrs/collision": "workspace:*",
+    "@nrs/db": "workspace:*",
+    "@nrs/domain": "workspace:*",
+    "@nrs/geometry": "workspace:*",
+    "@nrs/guidance": "workspace:*",
+    "@nrs/planner": "workspace:*",
+    "@nrs/playback": "workspace:*",
+    "@nrs/simulator": "workspace:*",
+    "@nrs/vehicle-catalog": "workspace:*",
+    "@nrs/vehicle-model": "workspace:*",
+    "konva": "10.3.1",
+    "lucide-react": "0.577.0",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-konva": "19.2.5",
+    "zod": "4.4.3",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3"
+  }
+}
